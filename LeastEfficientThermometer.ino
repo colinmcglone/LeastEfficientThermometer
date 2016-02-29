@@ -19,6 +19,15 @@ int previousVal = 0;
 int wait = 0;
 float alarmTemp = 0;
 
+const int numReadings = 10;
+
+int readings[numReadings];      // the readings from the analog input
+int readIndex = 0;              // the index of the current reading
+int total = 0;                  // the running total
+int average = 0;                // the average
+
+int currentVal = 0;
+
 int length = 15; // the number of notes
 char notes[] = "ccggaagffeeddc "; // a space represents a rest
 int beats[] = { 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 4 };
@@ -89,31 +98,56 @@ void setup(void) {
   sensors.setWaitForConversion(false);
   sensors.getAddress(deviceAddress, 0);
   pinMode(A7, INPUT);
+  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    readings[thisReading] = 0;
+  }
 }
 
 void loop(void) {
   float temperature = sensors.getTempC(deviceAddress);
   sensors.requestTemperatures();
   disp.write(temperature);
+  
+  total = total - readings[readIndex];
+  readings[readIndex] = analogRead(potPin);
+  total = total + readings[readIndex];
+  readIndex = readIndex + 1;
 
-  int currentVal = analogRead(potPin);
+  if (readIndex >= numReadings) {
+    readIndex = 0;
+  }
+
+  currentVal = total / numReadings;
+
   int valDif = currentVal - previousVal;
   if(abs(valDif) > 10){
     long cMillis = millis();
     long pMillis = cMillis;
     while(abs(valDif) > 10 || cMillis - pMillis < 2000){
-      currentVal = analogRead(potPin);
-      float alarmTemp = 0 + (currentVal * .04887585532);
-      if(alarmTemp > 0.001){
-        disp.write(alarmTemp);
+      total = total - readings[readIndex];
+      readings[readIndex] = analogRead(potPin);
+      total = total + readings[readIndex];
+      readIndex = readIndex + 1;
+    
+      if (readIndex >= numReadings) {
+        readIndex = 0;
       }
+    
+      currentVal = total / numReadings;
+      if(currentVal < 1) {currentVal = 1;}
+      float alarmTemp = 10 + (currentVal * .04887585532);
+      double dispTemp = round(alarmTemp*10)/10;
+      disp.write(dispTemp);
       valDif = currentVal - previousVal;
       previousVal = currentVal;
+      if(abs(valDif) > 10) {
+        pMillis = millis();
+      }
       cMillis = millis();
     }
   }
   
-  float alarmTemp = 0 + (currentVal * .04887585532);
+  float alarmTemp = 10 + (currentVal * .04887585532);
   while(alarmTemp <= temperature) {
     for (int i = 0; i < length; i++) {
       if (notes[i] == ' ') {
@@ -131,9 +165,18 @@ void loop(void) {
   long pMillis = cMillis - 1;
   while(cMillis - pMillis < 2000 || abs(valDif) > 50){
     valDif = currentVal - previousVal;
-    currentVal = analogRead(potPin);
-    disp.write(currentVal);
     previousVal = currentVal;
+    total = total - readings[readIndex];
+    readings[readIndex] = analogRead(potPin);
+    total = total + readings[readIndex];
+    readIndex = readIndex + 1;
+  
+    if (readIndex >= numReadings) {
+      readIndex = 0;
+    }
+  
+    currentVal = total / numReadings;
+    disp.write(currentVal);
     cMillis = millis();
   }
 }
