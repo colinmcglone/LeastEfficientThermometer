@@ -2,36 +2,63 @@
 #include <OneWire.h> 
 #include <SevenSeg.h>
 
+
+// Pin assignments
+
 SevenSeg disp(8,14,6,A1,23,7,5);
 const int numOfDigits=4;
 int digitPins[numOfDigits]={16,17,3,4};
 
 int DS18S20_Pin = A6; //DS18S20 Signal pin on digital 0
-
-//Temperature chip i/o
 OneWire ds(DS18S20_Pin); // on digital pin 0
+
+int potPin = A7;
+
+
+// Temperature chip i/o
 
 DallasTemperature sensors(&ds);
 DeviceAddress deviceAddress;
 
-int potPin = A7;
-int previousVal = 0;
-int wait = 0;
-float alarmTemp = 0;
+
+// Input cleaning
 
 const int numReadings = 10;
-
 int readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
 int total = 0;                  // the running total
 int average = 0;                // the average
 
-int currentVal = 0;
+
+// Alarm Tone
 
 int length = 15; // the number of notes
 char notes[] = "ccggaagffeeddc "; // a space represents a rest
 int beats[] = { 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 4 };
 int tempo = 300;
+
+
+// Alarm Temp
+
+int previousVal = 0;
+float alarmTemp = 0;
+int currentVal = 0;
+
+
+int cleanInput(int inputPin) {
+  total = total - readings[readIndex];
+  readings[readIndex] = analogRead(inputPin);
+  total = total + readings[readIndex];
+  readIndex = readIndex + 1;
+
+  if (readIndex >= numReadings) {
+    readIndex = 0;
+  }
+
+  currentVal = total / numReadings;
+  return currentVal;
+}
+
 
 void writeScroll(String message, int displayTime = 5000){
   int scroll = 125;
