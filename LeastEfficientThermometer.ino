@@ -41,7 +41,7 @@ int tempo = 300;
 // Alarm Temp
 
 int previousVal = 0;
-float alarmTemp = 0;
+double alarmTemp = 0;
 int currentVal = 0;
 
 
@@ -65,7 +65,8 @@ void writeScroll(String message, int displayTime = 5000){
   int len = message.length();
   int pos = 0;
   long previousMillis = millis();
-  if(len <= 4){
+// simply display message if display is big enough
+  if(len <= numOfDigits){
     while(pos != 1){
       disp.write(message);
       unsigned long currentMillis = millis();
@@ -74,19 +75,20 @@ void writeScroll(String message, int displayTime = 5000){
       }
     }
   }
+// scroll if needed
   else{
-    while(pos <= len - 4){
+    while(pos <= len - numOfDigits){
       unsigned long currentMillis = millis();
-      String msg = message.substring(pos, pos+4);
+      String msg = message.substring(pos, pos+numOfDigits);
       disp.write(msg);
       if(pos == 0){
-        scroll = 750;
+        scroll = 750;  // long first pause for readability
       }
-      else if(pos == len - 4){
-        scroll = 500;
+      else if(pos == len - numOfDigits){
+        scroll = 500;  // long last pause for readability
       }
       else{
-        scroll = 125;
+        scroll = 125;  // fast pauses
       }
       if(currentMillis - previousMillis > scroll){
         pos = pos + 1;
@@ -131,80 +133,49 @@ void setup(void) {
 }
 
 void loop(void) {
-  float temperature = sensors.getTempC(deviceAddress);
-  sensors.requestTemperatures();
-  disp.write(temperature);
-  
-  total = total - readings[readIndex];
-  readings[readIndex] = analogRead(potPin);
-  total = total + readings[readIndex];
-  readIndex = readIndex + 1;
-
-  if (readIndex >= numReadings) {
-    readIndex = 0;
-  }
-
-  currentVal = total / numReadings;
+  currentVal = cleanInput(potPin);
 
   int valDif = currentVal - previousVal;
-  if(abs(valDif) > 10){
-    long cMillis = millis();
-    long pMillis = cMillis;
-    while(abs(valDif) > 10 || cMillis - pMillis < 2000){
-      total = total - readings[readIndex];
-      readings[readIndex] = analogRead(potPin);
-      total = total + readings[readIndex];
-      readIndex = readIndex + 1;
-    
-      if (readIndex >= numReadings) {
-        readIndex = 0;
-      }
-    
-      currentVal = total / numReadings;
-      if(currentVal < 1) {currentVal = 1;}
-      float alarmTemp = 10 + (currentVal * .04887585532);
-      double dispTemp = round(alarmTemp*10)/10;
-      disp.write(dispTemp);
-      valDif = currentVal - previousVal;
-      previousVal = currentVal;
-      if(abs(valDif) > 10) {
-        pMillis = millis();
-      }
-      cMillis = millis();
+// show temp when not changing the alarm value
+  while(abs(valDif) <= 5){
+    previousVal = currentVal;
+
+    temperature = sensors.getTempC(deviceAddress);
+    sensors.requestTemperatures();
+    disp.write(temperature);
+
+    currentVal = cleanInput(potPin);
+    valDif = currentVal - previousVal;
+  }
+  long cMillis = millis();
+  long pMillis = cMillis;
+// when pot is being changed, display corresponding alarm temp
+  while(abs(valDif) > 5 || cMillis - pMillis < 2000){
+    currentVal = cleanInput(potPin);
+    if(currentVal < 1) {currentVal = 1;}
+    double alarmTemp = 10 + (currentVal * .04887585532);
+    double dispTemp = round(alarmTemp*10)/10;
+    disp.write(dispTemp);
+    valDif = currentVal - previousVal;
+    previousVal = currentVal;
+    if(abs(valDif) > 5) {
+      pMillis = millis();
     }
+    cMillis = millis();
   }
   
-  float alarmTemp = 10 + (currentVal * .04887585532);
-  while(alarmTemp <= temperature) {
+  double alarmTemp = 50 + (currentVal * .04887585532);
+// when temp reaches alarm temp play alarm
+  while(temperature >= alarmTemp) {
     for (int i = 0; i < length; i++) {
       if (notes[i] == ' ') {
         delay(beats[i] * tempo); // rest
       } else {
         playNote(notes[i], beats[i] * tempo);
       }
-  
       // pause between notes
       delay(tempo / 2); 
     }
-  }
-  
-  long cMillis = millis();
-  long pMillis = cMillis - 1;
-  while(cMillis - pMillis < 2000 || abs(valDif) > 50){
-    valDif = currentVal - previousVal;
-    previousVal = currentVal;
-    total = total - readings[readIndex];
-    readings[readIndex] = analogRead(potPin);
-    total = total + readings[readIndex];
-    readIndex = readIndex + 1;
-  
-    if (readIndex >= numReadings) {
-      readIndex = 0;
-    }
-  
-    currentVal = total / numReadings;
-    disp.write(currentVal);
-    cMillis = millis();
   }
 }
 
