@@ -9,10 +9,12 @@ SevenSeg disp(8,14,6,A1,23,7,5);
 const int numOfDigits=4;
 int digitPins[numOfDigits]={16,17,3,4};
 
-int DS18S20_Pin = A6; //DS18S20 Signal pin on digital 0
-OneWire ds(DS18S20_Pin); // on digital pin 0
+int DS18S20_Pin = 0;
+OneWire ds(DS18S20_Pin);
 
 int potPin = A7;
+
+int speakerPin = 10;
 
 
 // Temperature chip i/o
@@ -30,16 +32,9 @@ int total = 0;                  // the running total
 int average = 0;                // the average
 
 
-// Alarm Tone
-
-int length = 15; // the number of notes
-char notes[] = "ccggaagffeeddc "; // a space represents a rest
-int beats[] = { 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 4 };
-int tempo = 300;
-
-
 // Alarm Temp
 
+double temperature = 0;
 int previousVal = 0;
 double alarmTemp = 0;
 int currentVal = 0;
@@ -98,11 +93,19 @@ void writeScroll(String message, int displayTime = 5000){
   }
 }
 
+
+// Alarm sound
+
+int length = 4; // the number of notes
+char notes[] = "Cafc"; // a space represents a rest
+int beats[] = { 1, 1, 1, 1};
+int tempo = 100;
+
 void playTone(int tone, int duration) {
   for (long i = 0; i < duration * 1000L; i += tone * 2) {
-    digitalWrite(0, HIGH);
+    digitalWrite(speakerPin, HIGH);
     delayMicroseconds(tone);
-    digitalWrite(0, LOW);
+    digitalWrite(speakerPin, LOW);
     delayMicroseconds(tone);
   }
 }
@@ -119,6 +122,7 @@ void playNote(char note, int duration) {
   }
 }
 
+
 void setup(void) {
   disp.setDigitPins(numOfDigits, digitPins);
   disp.setDPPin(22);
@@ -126,6 +130,7 @@ void setup(void) {
   sensors.requestTemperatures();
   sensors.setWaitForConversion(false);
   sensors.getAddress(deviceAddress, 0);
+  pinMode(speakerPin, OUTPUT);
   pinMode(A7, INPUT);
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
     readings[thisReading] = 0;
@@ -146,6 +151,23 @@ void loop(void) {
 
     currentVal = cleanInput(potPin);
     valDif = currentVal - previousVal;
+    double alarmTemp = 10 + (currentVal * .04887585532);
+  // when temp reaches alarm temp play alarm
+    while(alarmTemp < temperature) {
+      for (int i = 0; i < length; i++) {
+        if (notes[i] == ' ') {
+          delay(beats[i] * tempo); // rest
+        } else {
+          playNote(notes[i], beats[i] * tempo);
+        }
+        // pause between notes
+        delay(tempo / 2); 
+      }
+      currentVal = cleanInput(potPin);
+      alarmTemp =  10 + (currentVal * .04887585532);
+      temperature = sensors.getTempC(deviceAddress);
+      sensors.requestTemperatures();
+    }
   }
   long cMillis = millis();
   long pMillis = cMillis;
@@ -162,20 +184,6 @@ void loop(void) {
       pMillis = millis();
     }
     cMillis = millis();
-  }
-  
-  double alarmTemp = 50 + (currentVal * .04887585532);
-// when temp reaches alarm temp play alarm
-  while(temperature >= alarmTemp) {
-    for (int i = 0; i < length; i++) {
-      if (notes[i] == ' ') {
-        delay(beats[i] * tempo); // rest
-      } else {
-        playNote(notes[i], beats[i] * tempo);
-      }
-      // pause between notes
-      delay(tempo / 2); 
-    }
   }
 }
 
