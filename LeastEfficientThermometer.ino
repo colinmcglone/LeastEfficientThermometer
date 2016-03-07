@@ -147,7 +147,7 @@ void loop(void) {
 
     temperature = sensors.getTempC(deviceAddress);
     sensors.requestTemperatures();
-    disp.write(temperature);
+    writeScroll(" HOT" + String(temperature));
 
     currentVal = cleanInput(potPin);
     valDif = currentVal - previousVal;
@@ -156,12 +156,12 @@ void loop(void) {
     while(alarmTemp < temperature) {
       for (int i = 0; i < length; i++) {
         if (notes[i] == ' ') {
-          delay(beats[i] * tempo); // rest
+          //delay(beats[i] * tempo); // rest
         } else {
           playNote(notes[i], beats[i] * tempo);
         }
         // pause between notes
-        delay(tempo / 2); 
+        //delay(tempo / 2); 
       }
       currentVal = cleanInput(potPin);
       alarmTemp =  10 + (currentVal * .04887585532);
@@ -178,12 +178,14 @@ void loop(void) {
     double alarmTemp = 10 + (currentVal * .04887585532);
     double dispTemp = round(alarmTemp*10)/10;
     disp.write(dispTemp);
-    valDif = currentVal - previousVal;
-    previousVal = currentVal;
-    if(abs(valDif) > 5) {
-      pMillis = millis();
+    if(cMillis - pMillis > 250) {
+      valDif = currentVal - previousVal;
+      previousVal = currentVal;
+      if(abs(valDif) > 5) {
+        pMillis = millis();
+      }
+      cMillis = millis();
     }
-    cMillis = millis();
   }
 }
 
