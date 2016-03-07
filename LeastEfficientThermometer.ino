@@ -155,7 +155,7 @@ void loop(void) {
     currentVal = cleanInput(potPin);
     valDif = currentVal - previousVal;
     alarmTemp = 10 + (currentVal * .04887585532);
-  // when temp reaches alarm temp play alarm
+    // when temp reaches alarm temp play alarm
     while(alarmTemp < temperature) {
       for (int i = 0; i < length; i++) {
         if (notes[i] == ' ') {
@@ -175,7 +175,7 @@ void loop(void) {
   }
   long cMillis = millis();
   long pMillis = cMillis;
-// when pot is being changed, display corresponding alarm temp
+  // when pot is being changed, display corresponding alarm temp
   while(abs(valDif) > 5 || cMillis - pMillis < 2000){
     currentVal = cleanInput(potPin);
     if(currentVal < 1) {currentVal = 1;}
