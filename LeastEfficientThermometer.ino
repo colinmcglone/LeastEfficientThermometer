@@ -50,8 +50,8 @@ int cleanInput(int inputPin) {
     readIndex = 0;
   }
 
-  currentVal = total / numReadings;
-  return currentVal;
+  average = total / numReadings;
+  return average;
 }
 
 
@@ -123,6 +123,7 @@ void playNote(char note, int duration) {
 }
 
 
+// Setup
 void setup(void) {
   disp.setDigitPins(numOfDigits, digitPins);
   disp.setDPPin(22);
@@ -131,12 +132,14 @@ void setup(void) {
   sensors.setWaitForConversion(false);
   sensors.getAddress(deviceAddress, 0);
   pinMode(speakerPin, OUTPUT);
-  pinMode(A7, INPUT);
+  pinMode(potPin, INPUT);
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
     readings[thisReading] = 0;
   }
 }
 
+
+// Main
 void loop(void) {
   currentVal = cleanInput(potPin);
 
@@ -147,11 +150,11 @@ void loop(void) {
 
     temperature = sensors.getTempC(deviceAddress);
     sensors.requestTemperatures();
-    writeScroll(" HOT" + String(temperature));
+    disp.write(String(temperature));
 
     currentVal = cleanInput(potPin);
     valDif = currentVal - previousVal;
-    double alarmTemp = 10 + (currentVal * .04887585532);
+    alarmTemp = 10 + (currentVal * .04887585532);
   // when temp reaches alarm temp play alarm
     while(alarmTemp < temperature) {
       for (int i = 0; i < length; i++) {
@@ -167,6 +170,7 @@ void loop(void) {
       alarmTemp =  10 + (currentVal * .04887585532);
       temperature = sensors.getTempC(deviceAddress);
       sensors.requestTemperatures();
+      writeScroll(" HOT" + String(temperature));
     }
   }
   long cMillis = millis();
@@ -175,7 +179,7 @@ void loop(void) {
   while(abs(valDif) > 5 || cMillis - pMillis < 2000){
     currentVal = cleanInput(potPin);
     if(currentVal < 1) {currentVal = 1;}
-    double alarmTemp = 10 + (currentVal * .04887585532);
+    alarmTemp = 10 + (currentVal * .04887585532);
     double dispTemp = round(alarmTemp*10)/10;
     disp.write(dispTemp);
     if(cMillis - pMillis > 250) {
