@@ -1,5 +1,9 @@
 # Automated Kettle
 
+This project merges the simplicity of a simple electric kettle with the complexity of a microcontroller to create a project which can expand to fit the spare time of it's creator.
+
+This project uses the arduino system for ease of use, the libraries for the thermometer and displays are well done and do almost all the work for us.
+
 ## Physical Description
 
 The modified parts of this kettle consist of a Serial 7 Segment Display, which has four 7 segment digits and an ATMega328, a potentiometer, a waterproof thermometer, and a piezo speaker.
@@ -21,7 +25,12 @@ An alarm goes off at an adjustable target temperature
 4. Pour hot water.
 
 
+## Issues and Limitations
+
+The reading of the thermometer lags about 10s behind the actual temperature of the water, so the alarm attempts to take this into account. The heating of the water is also fairly quick in the operational range so the response time of the user will effect the temperature of the water greatly. The kettle and board are powered by the same circuit, the heating element cannot be turned off seperately from the microcontroller. This means you cannot overheat and wait for the temperature to come down while seeing the temperature (turning on the heater and quickly shutting it off can give you a quick idea of the temperature without heating the water significantly, but that is a pretty crap solution).
+
+
 ## Future Plans
 
-Add PID control to allow water to rest at alarm temperature
+Add PID control to allow water to rest at alarm temperature.
 
