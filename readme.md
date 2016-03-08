@@ -14,6 +14,7 @@ The board is powered from the kettle by tapping into the source for the power in
 ## Features
 
 Displays current temperature
+
 An alarm goes off at an adjustable target temperature
 
 
