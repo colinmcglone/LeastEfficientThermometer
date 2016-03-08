@@ -1,6 +1,6 @@
 # Automated Kettle
 
-This project merges the simplicity of a simple electric kettle with the complexity of a microcontroller to create a project which can expand to fit the spare time of it's creator.
+This project merges the simplicity of an electric kettle with the complexity of a microcontroller to create a project which can expand to fit the spare time of it's creator.
 
 This project uses the arduino system for ease of use, the libraries for the thermometer and displays are well done and do almost all the work for us.
 
